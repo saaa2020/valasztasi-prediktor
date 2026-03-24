@@ -1,0 +1,6 @@
+# Cached API data (downloadable from vtr.valasztas.hu)
+data/cache/
+
+# OS files
+Thumbs.db
+.DS_Store

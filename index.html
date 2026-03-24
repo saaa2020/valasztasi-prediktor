@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 Választási Prediktor</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header id="header">
+        <div class="header-left">
+            <h1>2026 Választási Prediktor</h1>
+        </div>
+        <div class="header-right">
+            <button id="btn-auto-fill" class="btn btn-primary" disabled>
+                Auto kitöltés polling alapján
+            </button>
+            <button id="btn-reset" class="btn btn-danger" disabled>
+                Adatok törlése
+            </button>
+            <span id="loading-indicator" class="hidden">Betöltés...</span>
+        </div>
+    </header>
+
+    <main id="app">
+        <div class="top-section">
+            <div class="map-container">
+                <svg id="map-svg" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet">
+                    <g id="map-counties"></g>
+                    <g id="map-oevk"></g>
+                </svg>
+                <div id="map-tooltip" class="tooltip hidden"></div>
+            </div>
+
+            <div class="control-panel">
+                <section class="panel-section">
+                    <h3>Részvételi arány</h3>
+                    <div class="slider-group">
+                        <input type="range" id="turnout-slider" min="30" max="90" value="65" step="0.1">
+                        <span id="turnout-value" class="slider-value">65.0%</span>
+                    </div>
+                    <div class="turnout-info">
+                        <span>Szavazók: <strong id="total-voters">0</strong></span>
+                    </div>
+                </section>
+
+                <section class="panel-section">
+                    <h3>Országos listás szavazatok</h3>
+                    <div class="list-tabs">
+                        <button class="tab active" data-tab="domestic">Belföldi</button>
+                        <button class="tab" data-tab="postal">Levélszavazat</button>
+                    </div>
+                    <div id="list-votes-container"></div>
+                </section>
+
+                <section class="panel-section">
+                    <h3>Mandátumok összesítő</h3>
+                    <div id="mandate-summary"></div>
+                </section>
+            </div>
+        </div>
+
+        <div class="middle-section">
+            <div class="horseshoe-container">
+                <svg id="horseshoe-svg" viewBox="0 0 600 350" preserveAspectRatio="xMidYMid meet"></svg>
+                <div id="horseshoe-legend"></div>
+            </div>
+
+            <div class="oevk-detail-panel hidden" id="oevk-detail">
+                <div class="oevk-detail-header">
+                    <h3 id="oevk-detail-name"></h3>
+                    <button id="oevk-detail-close" class="btn-close">&times;</button>
+                </div>
+                <div id="oevk-detail-info"></div>
+                <div id="oevk-candidates-list"></div>
+                <div id="oevk-2022-results"></div>
+            </div>
+        </div>
+
+        <div class="bottom-section">
+            <div class="table-tabs">
+                <button class="tab active" data-table="oevk-table">OEVK lista</button>
+                <button class="tab" data-table="national-table">Országos összesítő</button>
+                <button class="tab" data-table="fragment-table">Töredékszavazatok</button>
+            </div>
+            <div id="oevk-table" class="table-container active"></div>
+            <div id="national-table" class="table-container hidden"></div>
+            <div id="fragment-table" class="table-container hidden"></div>
+        </div>
+    </main>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+{
+    "description": "2022→2026 party mapping for swing calculation",
+    "mappings": {
+        "FIDESZ-KDNP": {
+            "prev2022": "FIDESZ-KDNP",
+            "nationalPct2022": 54.1,
+            "inheritRatio": 1.0
+        },
+        "TISZA": {
+            "prev2022": "DK-JOBBIK-MOMENTUM-MSZP-LMP-PÁRBESZÉD",
+            "nationalPct2022": 34.4,
+            "inheritRatio": 0.85,
+            "note": "TISZA inherits ~85% of the dissolved 2022 opposition coalition"
+        },
+        "DK": {
+            "prev2022": "DK-JOBBIK-MOMENTUM-MSZP-LMP-PÁRBESZÉD",
+            "nationalPct2022": 34.4,
+            "inheritRatio": 0.08,
+            "note": "DK runs independently in 2026, gets ~8% of former coalition"
+        },
+        "Mi Hazánk": {
+            "prev2022": "MI HAZÁNK MOZGALOM",
+            "nationalPct2022": 5.9,
+            "inheritRatio": 1.0
+        },
+        "MKKP": {
+            "prev2022": "MKKP",
+            "nationalPct2022": 3.3,
+            "inheritRatio": 1.0
+        }
+    },
+    "partyTiers": {
+        "MAJOR": ["FIDESZ-KDNP", "TISZA"],
+        "MINOR": ["DK", "Mi Hazánk"],
+        "OTHER": "everything else + independents"
+    }
+}
