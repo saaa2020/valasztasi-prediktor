@@ -138,31 +138,34 @@ export function calculateSeatAllocation({
         oevkWinnerByDistrict.set(oevkId, winner.coalitionCode);
     }
 
-    // 2. Calculate fragment votes
+    // 2. Calculate fragment votes (raw, for all parties)
     const fragmentVotes = calculateFragmentVotes(oevkResults);
 
-    // 3. Combine list votes: domestic + postal + fragment votes
-    const combinedListVotes = new Map();
+    // 3. Sum list votes (domestic + postal) WITHOUT fragments first
+    const baseListVotes = new Map();
     const allCodes = new Set([
         ...domesticListVotes.keys(),
         ...postalListVotes.keys(),
-        ...fragmentVotes.keys(),
     ]);
-
     for (const code of allCodes) {
-        // Only include parties that have a registered list
         if (!partyListMap.has(code)) continue;
         const domestic = domesticListVotes.get(code) || 0;
         const postal = postalListVotes.get(code) || 0;
-        const fragment = fragmentVotes.get(code) || 0;
-        combinedListVotes.set(code, domestic + postal + fragment);
+        baseListVotes.set(code, domestic + postal);
     }
 
-    // 4. Apply threshold
-    const aboveThreshold = applyThreshold(combinedListVotes, partyListMap);
+    // 4. Apply threshold on base list votes (without fragments)
+    const aboveThreshold = applyThreshold(baseListVotes, partyListMap);
 
-    // 5. D'Hondt allocation for list seats
-    const listSeats = dhondt(aboveThreshold, LIST_SEATS);
+    // 5. Add fragment votes ONLY to parties that passed the threshold
+    const combinedListVotes = new Map();
+    for (const [code, votes] of aboveThreshold) {
+        const fragment = fragmentVotes.get(code) || 0;
+        combinedListVotes.set(code, votes + fragment);
+    }
+
+    // 6. D'Hondt allocation for list seats
+    const listSeats = dhondt(combinedListVotes, LIST_SEATS);
 
     // 6. Combine OEVK + list seats
     const totalSeats = new Map();
