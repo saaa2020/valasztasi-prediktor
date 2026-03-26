@@ -91,7 +91,7 @@ export function getImageUrl(id) {
     return `${IMAGE_URL}/${id}`;
 }
 
-import { PARTY_COLOR_OVERRIDES } from './utils.js';
+import { PARTY_COLOR_OVERRIDES } from './utils.js?v=3';
 
 // === Normalized data accessors ===
 

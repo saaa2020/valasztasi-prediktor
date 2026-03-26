@@ -1,12 +1,12 @@
 // === Main application entry point ===
 
-import { loadAllData } from './data.js';
-import { renderMap, updateAllColors, showTooltip } from './map.js';
-import { renderHorseshoe } from './horseshoe.js';
-import { calculateSeatAllocation } from './electoral-math.js';
-import { PredictionState } from './prediction.js';
-import { fetchPollingData, averageRecentPolls, filterPollsByBias } from './polling.js';
-import { bus, formatNumber, formatPct, debounce, getPartyTier } from './utils.js';
+import { loadAllData } from './data.js?v=3';
+import { renderMap, updateAllColors, showTooltip } from './map.js?v=3';
+import { renderHorseshoe } from './horseshoe.js?v=3';
+import { calculateSeatAllocation } from './electoral-math.js?v=3';
+import { PredictionState } from './prediction.js?v=3';
+import { fetchPollingData, averageRecentPolls, filterPollsByBias } from './polling.js?v=3';
+import { bus, formatNumber, formatPct, debounce, getPartyTier } from './utils.js?v=3';
 
 let data = null;
 let state = null;
