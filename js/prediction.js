@@ -253,6 +253,14 @@ export class PredictionState {
         bus.emit('prediction-changed', { type: 'all' });
     }
 
+    /**
+     * Re-initialize OEVK predictions from 2022 results.
+     * Used before applying polling swing to ensure a valid base.
+     */
+    reinitOevkPredictions() {
+        this._initOevkPredictions();
+    }
+
     // === Getters ===
 
     getOevkResults(oevkId) {

@@ -325,6 +325,8 @@ const recalculate = debounce(() => {
         domesticListVotes: state.getDomesticListVotes(),
         postalListVotes: state.getPostalListVotes(),
         partyListMap: data.partyListMap,
+        nationalityListMap: data.nationalityListMap,
+        turnoutPct: state.turnoutPct,
     });
 
     // Update map colors
@@ -356,13 +358,16 @@ function renderMandateSummary() {
             const coalition = data.coalitionMap.get(code);
             const oevk = currentAllocation.oevkWinners.get(code) || 0;
             const list = currentAllocation.listSeats.get(code) || 0;
-            return { code, total, oevk, list, coalition };
+            const nationality = currentAllocation.nationalitySeats.get(code) || 0;
+            return { code, total, oevk, list, nationality, coalition };
         })
         .sort((a, b) => b.total - a.total);
 
+    const hasNationality = currentAllocation.nationalityMandateCount > 0;
+
     let html = `
         <div class="mandate-row header">
-            <span></span><span>Párt</span><span class="num">OEVK</span><span class="num">Lista</span><span class="num">Össz.</span>
+            <span></span><span>Párt</span><span class="num">OEVK</span><span class="num">Lista</span>${hasNationality ? '<span class="num">Nemz.</span>' : ''}<span class="num">Össz.</span>
         </div>
     `;
 
@@ -375,9 +380,16 @@ function renderMandateSummary() {
                 <span>${name}</span>
                 <span class="num">${e.oevk}</span>
                 <span class="num">${e.list}</span>
+                ${hasNationality ? `<span class="num">${e.nationality || ''}</span>` : ''}
                 <span class="num mandate-total">${e.total}</span>
             </div>
         `;
+    }
+
+    if (hasNationality) {
+        html += `<div class="mandate-note" style="font-size:0.7rem; color:var(--text-muted); margin-top:0.4rem;">
+            Nemz.: kedvezményes nemzetiségi mandátum (${currentAllocation.nationalityMandateCount} db, listás helyek: ${currentAllocation.partyListSeats})
+        </div>`;
     }
 
     container.innerHTML = html;
@@ -431,33 +443,40 @@ function renderNationalTable() {
     const container = document.getElementById('national-table');
     if (!currentAllocation) { container.innerHTML = ''; return; }
 
+    const hasNationality = currentAllocation.nationalityMandateCount > 0;
+
     const entries = [...currentAllocation.totalSeats.entries()]
         .map(([code, total]) => {
             const coalition = data.coalitionMap.get(code);
             const oevk = currentAllocation.oevkWinners.get(code) || 0;
             const list = currentAllocation.listSeats.get(code) || 0;
+            const nationality = currentAllocation.nationalitySeats.get(code) || 0;
             const listVotes = currentAllocation.combinedListVotes.get(code) || 0;
             const totalListVotes = [...currentAllocation.combinedListVotes.values()].reduce((s, v) => s + v, 0);
             const listPct = totalListVotes > 0 ? (listVotes / totalListVotes * 100) : 0;
-            return { code, total, oevk, list, listVotes, listPct, coalition };
+            return { code, total, oevk, list, nationality, listVotes, listPct, coalition };
         })
         .sort((a, b) => b.total - a.total);
 
     let rows = entries.map(e => {
         const color = e.coalition ? e.coalition.color : '#888';
         const name = e.coalition ? (e.coalition.shortName || e.coalition.name) : '?';
+        const natCell = hasNationality ? `<td class="num">${e.nationality || ''}</td>` : '';
         return `<tr>
             <td><span class="party-color" style="background:${color}; display:inline-block; width:10px; height:10px; border-radius:2px; vertical-align:middle; margin-right:4px;"></span>${name}</td>
             <td class="num">${e.oevk}</td>
             <td class="num">${e.list}</td>
+            ${natCell}
             <td class="num"><strong>${e.total}</strong></td>
             <td class="num">${formatNumber(e.listVotes)}</td>
             <td class="num">${formatPct(e.listPct)}</td>
         </tr>`;
     }).join('');
 
+    const natHeader = hasNationality ? '<th>Nemz.</th>' : '';
+
     container.innerHTML = `<table>
-        <thead><tr><th>Párt</th><th>OEVK</th><th>Lista</th><th>Össz.</th><th>Listás szav.</th><th>Lista %</th></tr></thead>
+        <thead><tr><th>Párt</th><th>OEVK</th><th>Lista</th>${natHeader}<th>Össz.</th><th>Listás szav.</th><th>Lista %</th></tr></thead>
         <tbody>${rows}</tbody>
     </table>`;
 }
@@ -534,6 +553,10 @@ async function handleAutoFill() {
         // Map polling percentages to coalition codes
         // This requires matching polling party names to our coalition data
         const pollingToCoalition = mapPollingToCoalitions(avg, data);
+
+        // Re-init OEVK predictions from 2022 base before applying swing
+        // (otherwise after reset, all pcts are 0 and swing produces garbage)
+        state.reinitOevkPredictions();
 
         // Apply swing to OEVK predictions
         applySwingFromPolling(avg, data, state);

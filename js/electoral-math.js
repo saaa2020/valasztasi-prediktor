@@ -103,6 +103,35 @@ export function applyThreshold(listVotes, partyListMap) {
 }
 
 /**
+ * Calculate kedvezményes (preferential) nationality mandates.
+ * Vjt. 16.§: kedvezményes kvóta = total party list votes / (list seats × 4)
+ * Each nationality list gets 1 mandate if its estimated votes >= kvóta.
+ *
+ * @param {number} totalPartyListVotes - sum of all party list votes
+ * @param {number} listSeatsAvailable - total list seats (93)
+ * @param {Map<number, {registeredVoters: number, coalitionCode: number}>} nationalityListMap
+ * @param {number} turnoutPct - turnout percentage (0-100)
+ * @returns {Map<number, number>} coalitionCode -> 1 for each nationality that won a mandate
+ */
+export function calculateNationalityMandates(totalPartyListVotes, listSeatsAvailable, nationalityListMap, turnoutPct) {
+    const nationalitySeats = new Map();
+    if (totalPartyListVotes <= 0 || !nationalityListMap || nationalityListMap.size === 0) {
+        return nationalitySeats;
+    }
+
+    const kvota = totalPartyListVotes / (listSeatsAvailable * 4);
+
+    for (const [code, info] of nationalityListMap) {
+        const estimatedVotes = Math.round(info.registeredVoters * turnoutPct / 100);
+        if (estimatedVotes >= kvota) {
+            nationalitySeats.set(code, 1);
+        }
+    }
+
+    return nationalitySeats;
+}
+
+/**
  * Full seat allocation calculation.
  *
  * @param {Object} params
@@ -110,6 +139,8 @@ export function applyThreshold(listVotes, partyListMap) {
  * @param {Map<number, number>} params.domesticListVotes - coalitionCode -> domestic list votes
  * @param {Map<number, number>} params.postalListVotes - coalitionCode -> postal list votes
  * @param {Map<number, {threshold: number}>} params.partyListMap
+ * @param {Map<number, {registeredVoters: number}>} [params.nationalityListMap] - nationality lists
+ * @param {number} [params.turnoutPct] - turnout percentage for nationality vote estimation
  * @returns {Object} Full allocation result
  */
 export function calculateSeatAllocation({
@@ -117,10 +148,12 @@ export function calculateSeatAllocation({
     domesticListVotes,
     postalListVotes,
     partyListMap,
+    nationalityListMap,
+    turnoutPct,
 }) {
     const TOTAL_SEATS = 199;
     const OEVK_SEATS = 106;
-    const LIST_SEATS = TOTAL_SEATS - OEVK_SEATS; // 93
+    const BASE_LIST_SEATS = TOTAL_SEATS - OEVK_SEATS; // 93
 
     // 1. Count OEVK winners
     const oevkWinners = new Map(); // coalitionCode -> count
@@ -164,14 +197,28 @@ export function calculateSeatAllocation({
         combinedListVotes.set(code, votes + fragment);
     }
 
-    // 6. D'Hondt allocation for list seats
-    const listSeats = dhondt(combinedListVotes, LIST_SEATS);
+    // 5b. Calculate kedvezményes nemzetiségi mandátumok (Vjt. 16.§)
+    const totalPartyListVotes = [...baseListVotes.values()].reduce((s, v) => s + v, 0);
+    const nationalitySeats = calculateNationalityMandates(
+        totalPartyListVotes, BASE_LIST_SEATS, nationalityListMap, turnoutPct || 65
+    );
+    const nationalityMandateCount = [...nationalitySeats.values()].reduce((s, v) => s + v, 0);
 
-    // 6. Combine OEVK + list seats
+    // 6. D'Hondt allocation for remaining list seats (93 - nationality mandates)
+    const partyListSeats = BASE_LIST_SEATS - nationalityMandateCount;
+    const listSeats = dhondt(combinedListVotes, partyListSeats);
+
+    // 7. Combine OEVK + list + nationality seats
     const totalSeats = new Map();
-    const allPartyCodes = new Set([...oevkWinners.keys(), ...listSeats.keys()]);
+    const allPartyCodes = new Set([
+        ...oevkWinners.keys(), ...listSeats.keys(), ...nationalitySeats.keys(),
+    ]);
     for (const code of allPartyCodes) {
-        totalSeats.set(code, (oevkWinners.get(code) || 0) + (listSeats.get(code) || 0));
+        totalSeats.set(code,
+            (oevkWinners.get(code) || 0) +
+            (listSeats.get(code) || 0) +
+            (nationalitySeats.get(code) || 0)
+        );
     }
 
     return {
@@ -181,9 +228,12 @@ export function calculateSeatAllocation({
         combinedListVotes,
         aboveThreshold,
         listSeats,
+        nationalitySeats,
+        nationalityMandateCount,
         totalSeats,
         totalOevkSeats: OEVK_SEATS,
-        totalListSeats: LIST_SEATS,
+        totalListSeats: BASE_LIST_SEATS,
+        partyListSeats,
     };
 }
 

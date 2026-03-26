@@ -14,6 +14,7 @@ const SPECTRUM_ORDER = [
     'DK', 'MSZP', 'LMP', 'Párbeszéd', 'Momentum',
     'TISZA',
     'MKKP',
+    'Romák', 'MNOÖ', 'OHÖ', 'OSZÖ', // Nationality lists
     'Mi Hazánk', 'MI HAZÁNK',
     'FIDESZ', 'KDNP', 'FIDESZ-KDNP',
 ];

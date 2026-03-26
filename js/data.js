@@ -203,6 +203,7 @@ export async function fetchPartyLists() {
             type: l.lista_tip, // "O" = ordinary, "K" = coalition, "N" = nationality
             threshold: parseInt(l.hatar || '5', 10),
             coalitionName: l.jlcs_nev,
+            nemzkod: l.nemzkod || null, // Nationality code (only for type "N")
             candidates: (l.jeloltek || [])
                 .filter(j => j.allapot === '1') // Only registered candidates
                 .map(j => ({
@@ -237,15 +238,30 @@ export async function fetchPrevResults() {
     }));
 }
 
-/** Fetch national voter totals */
+// Mapping from NVI nationality code (nemzkod) to OsszLetszam.json field name
+const NEMZKOD_TO_FIELD = {
+    1: 'bolgar', 2: 'gorog', 3: 'horvat', 4: 'lengyel', 5: 'nemet',
+    6: 'ormeny', 7: 'roma', 8: 'roman', 9: 'ruszin', 10: 'szerb',
+    11: 'szlovak', 12: 'szloven', 13: 'ukran',
+};
+
+/** Fetch national voter totals (including nationality voter counts) */
 export async function fetchNationalTotals() {
     const raw = await fetchData('OsszLetszam.json');
     const d = raw.data || raw;
+
+    // Extract nationality voter counts: nemzkod -> registered voters
+    const nationalityVoters = {};
+    for (const [nemzkod, field] of Object.entries(NEMZKOD_TO_FIELD)) {
+        nationalityVoters[nemzkod] = d[field] || 0;
+    }
+
     return {
         totalVoters: d.szumma || 0,
         domesticVoters: d.magyarLakc || d.lakcSzavkorSzavaz || 0,
         postalVoters: d.levelben || 0,
         partyListVoters: d.partlistara || 0,
+        nationalityVoters,
     };
 }
 
@@ -305,11 +321,23 @@ export async function loadAllData(onProgress) {
     result.prevResultsMap = new Map(result.prevResults.map(r => [r.id, r]));
     result.polygonMap = new Map(result.oevkPolygons.map(p => [p.id, p]));
 
-    // Build party list map by coalition code
+    // Build party list map by coalition code (excluding nationality lists)
     result.partyListMap = new Map();
     for (const l of result.partyLists) {
         if (l.type !== 'N') {
             result.partyListMap.set(l.coalitionCode, l);
+        }
+    }
+
+    // Build nationality list map: coalitionCode -> { ...listInfo, registeredVoters }
+    result.nationalityListMap = new Map();
+    for (const l of result.partyLists) {
+        if (l.type === 'N' && l.nemzkod != null) {
+            const registeredVoters = result.nationalTotals.nationalityVoters[l.nemzkod] || 0;
+            result.nationalityListMap.set(l.coalitionCode, {
+                ...l,
+                registeredVoters,
+            });
         }
     }
 

@@ -86,6 +86,9 @@ export const PARTY_COLOR_OVERRIDES = {
     'Munkáspárt':   '#CC0000',  // Munkáspárt red
     'SZOM':         '#E81B85',  // SZOM pink (correct in API)
     'Független':    '#555566',  // Independent dark gray
+    // Nationality lists (kedvezményes mandátum)
+    'Magyarországi Romák Országos': '#8B4513', // Roma brown
+    'MNOÖ':         '#D4AF37',  // German gold
 };
 
 // Party tier classification
