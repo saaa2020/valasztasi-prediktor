@@ -60,6 +60,19 @@ body {
     background-clip: text;
 }
 .header-right { display: flex; align-items: center; gap: 1rem; }
+.poll-filter {
+    padding: 0.45rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    color: var(--text);
+    font-size: 0.8rem;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.poll-filter:hover, .poll-filter:focus { border-color: var(--accent); }
+.poll-filter option { background: var(--bg-panel); color: var(--text); }
 
 /* === Buttons === */
 .btn {
