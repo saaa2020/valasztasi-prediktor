@@ -5,7 +5,7 @@ import { renderMap, updateAllColors, showTooltip } from './map.js';
 import { renderHorseshoe } from './horseshoe.js';
 import { calculateSeatAllocation } from './electoral-math.js';
 import { PredictionState } from './prediction.js';
-import { fetchPollingData, averageRecentPolls } from './polling.js';
+import { fetchPollingData, averageRecentPolls, filterPollsByBias } from './polling.js';
 import { bus, formatNumber, formatPct, debounce, getPartyTier } from './utils.js';
 
 let data = null;
@@ -542,11 +542,16 @@ async function handleAutoFill() {
     btn.textContent = 'Polling betöltése...';
 
     try {
-        const polls = await fetchPollingData();
-        const avg = averageRecentPolls(polls, 5);
+        const allPolls = await fetchPollingData();
+
+        // Apply firm bias filter from selector (defaults to "all" if element missing)
+        var filterEl = document.getElementById('poll-filter');
+        var filter = filterEl ? filterEl.value : 'all';
+        var polls = filterPollsByBias(allPolls, filter);
+        var avg = averageRecentPolls(polls, 5);
 
         if (!avg) {
-            alert('Nem sikerült polling adatot betölteni.');
+            alert('Nem talalhato polling adat a kivalasztott szurovel.');
             return;
         }
 
@@ -569,7 +574,8 @@ async function handleAutoFill() {
         renderListVotes();
         if (selectedOevkId) renderOevkDetail(selectedOevkId);
 
-        btn.textContent = `Auto kitöltve (${polls.length} poll)`;
+        var filterLabel = filter === 'gov' ? ', korm.' : filter === 'opp' ? ', ell.' : '';
+        btn.textContent = 'Kitoltve (' + polls.length + ' poll' + filterLabel + ')';
 
     } catch (err) {
         console.error('Polling error:', err);

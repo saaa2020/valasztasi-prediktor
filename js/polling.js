@@ -183,6 +183,42 @@ function parseNumber(s) {
 }
 
 /**
+ * Polling firm bias classification.
+ * "gov" = government-aligned, "opp" = opposition-aligned / independent.
+ * Keys are ASCII-lowercase substrings matched against firm names.
+ */
+const GOV_FIRMS = ['szazadveg', 'nezopont', 'iranyt', 'real-pr', 'real pr'];
+const OPP_FIRMS = ['median', 'publicus', 'zavecz', 'republikon', 'idea', 'ipsos'];
+
+/**
+ * Classify a polling firm name as "gov" or "opp".
+ * Strips diacritics before matching for robustness.
+ */
+function classifyFirm(firmName) {
+    if (!firmName) return 'opp';
+    // Strip diacritics: e.g. "Századvég" -> "Szazadveg"
+    var normalized = firmName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    for (var i = 0; i < GOV_FIRMS.length; i++) {
+        if (normalized.indexOf(GOV_FIRMS[i]) !== -1) return 'gov';
+    }
+    for (var i = 0; i < OPP_FIRMS.length; i++) {
+        if (normalized.indexOf(OPP_FIRMS[i]) !== -1) return 'opp';
+    }
+    return 'opp';
+}
+
+/**
+ * Filter polls by firm bias.
+ * @param {Array} polls
+ * @param {"all"|"gov"|"opp"} filter
+ * @returns {Array}
+ */
+export function filterPollsByBias(polls, filter) {
+    if (!filter || filter === 'all') return polls;
+    return polls.filter(function(p) { return classifyFirm(p.firm) === filter; });
+}
+
+/**
  * Average the most recent N polls.
  *
  * @param {Array} polls - parsed polling data
