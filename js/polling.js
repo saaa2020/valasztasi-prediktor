@@ -183,55 +183,6 @@ function parseNumber(s) {
 }
 
 /**
- * Polling firm bias classification.
- * "gov" = government-aligned, "opp" = opposition-aligned / independent.
- * Firms not listed default to "opp" (independent).
- */
-const FIRM_BIAS = {
-    'századvég':    'gov',
-    'szazadveg':    'gov',
-    'nézőpont':     'gov',
-    'nezopont':     'gov',
-    'nézopont':     'gov',
-    'iránytű':      'gov',
-    'iranytű':      'gov',
-    'iranytu':      'gov',
-    'real':         'gov',
-    'real-pr':      'gov',
-    'medián':       'opp',
-    'median':       'opp',
-    'publicus':     'opp',
-    'závecz':       'opp',
-    'zavecz':       'opp',
-    'republikon':   'opp',
-    'idea':         'opp',
-    'ipsos':        'opp',
-};
-
-/**
- * Classify a polling firm name as "gov" or "opp".
- */
-function classifyFirm(firmName) {
-    const lower = (firmName || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const lowerOrig = (firmName || '').toLowerCase();
-    for (const [key, bias] of Object.entries(FIRM_BIAS)) {
-        if (lowerOrig.includes(key) || lower.includes(key)) return bias;
-    }
-    return 'opp'; // default: independent
-}
-
-/**
- * Filter polls by firm bias.
- * @param {Array} polls
- * @param {"all"|"gov"|"opp"} filter
- * @returns {Array}
- */
-export function filterPollsByBias(polls, filter = 'all') {
-    if (filter === 'all') return polls;
-    return polls.filter(p => classifyFirm(p.firm) === filter);
-}
-
-/**
  * Average the most recent N polls.
  *
  * @param {Array} polls - parsed polling data
