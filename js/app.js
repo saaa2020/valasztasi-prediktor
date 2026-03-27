@@ -1,12 +1,12 @@
 // === Main application entry point ===
 
-import { loadAllData } from './data.js?v=3';
-import { renderMap, updateAllColors, showTooltip } from './map.js?v=3';
-import { renderHorseshoe } from './horseshoe.js?v=3';
-import { calculateSeatAllocation } from './electoral-math.js?v=3';
-import { PredictionState } from './prediction.js?v=3';
-import { fetchPollingData, averageRecentPolls, filterPollsByBias } from './polling.js?v=3';
-import { bus, formatNumber, formatPct, debounce, getPartyTier } from './utils.js?v=3';
+import { loadAllData } from './data.js?v=4';
+import { renderMap, updateAllColors, showTooltip } from './map.js?v=4';
+import { renderHorseshoe } from './horseshoe.js?v=4';
+import { calculateSeatAllocation } from './electoral-math.js?v=4';
+import { PredictionState } from './prediction.js?v=4';
+import { fetchPollingData, averageRecentPolls, filterPollsByBias } from './polling.js?v=4';
+import { bus, formatNumber, formatPct, debounce, getPartyTier } from './utils.js?v=4';
 
 let data = null;
 let state = null;
@@ -243,7 +243,7 @@ function renderOevkDetail(oevkId) {
     // Info
     infoEl.innerHTML = oevk ? `
         <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.75rem;">
-            ${oevk.county || ''} · Választópolgárok: ${formatNumber(oevk.voters)}
+            ${oevk.szekhely ? `${oevk.szekhely} · ` : ''}${oevk.county || ''} · Választópolgárok: ${formatNumber(oevk.voters)}
         </div>
     ` : '';
 
@@ -418,7 +418,7 @@ function renderOevkTable() {
 
         rows += `<tr data-oevk="${oevk.id}" style="cursor:pointer">
             <td>${oevk.id}</td>
-            <td>${oevk.name}</td>
+            <td>${oevk.name}${oevk.szekhely ? `, ${oevk.szekhely}` : ''}</td>
             <td>
                 <span class="party-color" style="background:${winnerCoalition ? winnerCoalition.color : '#888'}; display:inline-block; width:10px; height:10px; border-radius:2px; vertical-align:middle; margin-right:4px;"></span>
                 ${winnerCoalition ? (winnerCoalition.shortName || winnerCoalition.name) : '–'}

@@ -91,7 +91,7 @@ export function getImageUrl(id) {
     return `${IMAGE_URL}/${id}`;
 }
 
-import { PARTY_COLOR_OVERRIDES } from './utils.js?v=3';
+import { PARTY_COLOR_OVERRIDES } from './utils.js?v=4';
 
 // === Normalized data accessors ===
 
@@ -137,6 +137,7 @@ export async function fetchOevks() {
         maz: String(o.maz).padStart(2, '0'),
         evk: String(o.evk).padStart(2, '0'),
         name: o.evk_nev,
+        szekhely: o.szekhely || '',
         county: o.maz_nev,
         voters: o.letszam ? o.letszam.osszesen : 0,
         votersResident: o.letszam ? o.letszam.honos : 0,

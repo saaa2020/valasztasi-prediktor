@@ -1,7 +1,7 @@
 // === Prediction state management ===
 
-import { bus, getPartyTier } from './utils.js?v=3';
-import { pctToVotes } from './electoral-math.js?v=3';
+import { bus, getPartyTier } from './utils.js?v=4';
+import { pctToVotes } from './electoral-math.js?v=4';
 
 /**
  * PredictionState holds all user-editable prediction data and emits events on change.
