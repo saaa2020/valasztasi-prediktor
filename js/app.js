@@ -296,8 +296,11 @@ function renderListVotes() {
 
 function renderLiveListVotes(container) {
     const listRes = liveData.results.listRes;
-    // Take the last list entry (latest reporting round)
-    const listEntry = listRes.list && listRes.list.length ? listRes.list[listRes.list.length - 1] : null;
+    // Find the national-level entry (oszint "5"), not the last element
+    // which may be a county-level breakdown (oszint "4")
+    const listEntry = listRes.list && listRes.list.length
+        ? (listRes.list.find(e => e.oszint === '5' || e.oszint === 5) || listRes.list[0])
+        : null;
     if (!listEntry || !listEntry.tetelek) return;
 
     // Build tl_id -> { coalitionCode, type } lookup
@@ -1358,7 +1361,7 @@ function extractNationalFeldar() {
     if (patko && patko.data && typeof patko.data.feldar === 'number') return patko.data.feldar;
     const listas = liveData.results && liveData.results.listRes;
     if (listas && listas.list && listas.list.length > 0) {
-        const row = listas.list[listas.list.length - 1];
+        const row = listas.list.find(e => e.oszint === '5' || e.oszint === 5) || listas.list[0];
         if (typeof row.feldar === 'number') return row.feldar;
     }
     return null;
