@@ -132,27 +132,20 @@ export function updateAllColors(getColor) {
 
 /**
  * Show/hide/move the map tooltip.
+ * The caller is responsible for building the HTML content (it knows the
+ * current display mode - prediction, turnout, live winner, etc.).
+ *
+ * @param {string|null} oevkId - hovered OEVK id, or null to hide
+ * @param {Event|null} event - mouse event for positioning, or null to hide
+ * @param {string} html - tooltip inner HTML
  */
-export function showTooltip(oevkId, event, data, predictionState) {
+export function showTooltip(oevkId, event, html) {
     const tooltip = document.getElementById('map-tooltip');
     if (!oevkId || !event) {
         tooltip.classList.add('hidden');
         return;
     }
-
-    const oevk = data.oevkMap.get(oevkId);
-    const candidates = predictionState.getOevkResults(oevkId);
-    const winner = candidates && candidates.length > 0
-        ? [...candidates].sort((a, b) => b.pct - a.pct)[0]
-        : null;
-
-    const coalition = winner ? data.coalitionMap.get(winner.coalitionCode) : null;
-
-    tooltip.innerHTML = `
-        <div class="tt-name">${oevk ? oevk.name : oevkId}</div>
-        ${winner ? `<div class="tt-winner">${coalition ? coalition.shortName || coalition.name : '?'} – ${winner.pct.toFixed(1)}%</div>` : '<div>Nincs adat</div>'}
-    `;
-
+    tooltip.innerHTML = html;
     const mapRect = document.querySelector('.map-container').getBoundingClientRect();
     tooltip.style.left = (event.clientX - mapRect.left + 10) + 'px';
     tooltip.style.top = (event.clientY - mapRect.top - 10) + 'px';

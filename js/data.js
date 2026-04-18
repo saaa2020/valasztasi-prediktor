@@ -91,7 +91,7 @@ export function getImageUrl(id) {
     return `${IMAGE_URL}/${id}`;
 }
 
-import { PARTY_COLOR_OVERRIDES } from './utils.js?v=4';
+import { PARTY_COLOR_OVERRIDES } from './utils.js?v=11';
 
 // === Normalized data accessors ===
 
@@ -198,21 +198,24 @@ export async function fetchPartyLists() {
     const list = raw.list || raw;
     return list
         .filter(l => l.allapot === '1') // Only registered lists
-        .map(l => ({
-            listId: l.tl_id,
-            coalitionCode: l.jlcs_kod,
-            type: l.lista_tip, // "O" = ordinary, "K" = coalition, "N" = nationality
-            threshold: parseInt(l.hatar || '5', 10),
-            coalitionName: l.jlcs_nev,
-            nemzkod: l.nemzkod || null, // Nationality code (only for type "N")
-            candidates: (l.jeloltek || [])
-                .filter(j => j.allapot === '1') // Only registered candidates
-                .map(j => ({
+        .map(l => {
+            // tl_id is on candidates, not on the list object itself
+            const candidates = (l.jeloltek || []).filter(j => j.allapot === '1');
+            const tlId = l.tl_id || (candidates.length > 0 ? candidates[0].tl_id : null);
+            return {
+                listId: tlId,
+                coalitionCode: l.jlcs_kod,
+                type: l.lista_tip, // "O" = ordinary, "K" = coalition, "N" = nationality
+                threshold: parseInt(l.hatar || '5', 10),
+                coalitionName: l.jlcs_nev,
+                nemzkod: l.nemzkod || null, // Nationality code (only for type "N")
+                candidates: candidates.map(j => ({
                     id: j.tj_id,
                     name: j.neve,
                     position: j.sorsz,
                 })),
-        }));
+            };
+        });
 }
 
 /** Fetch 2022 OEVK results - flat list, needs grouping */

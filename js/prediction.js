@@ -1,7 +1,7 @@
 // === Prediction state management ===
 
-import { bus, getPartyTier } from './utils.js?v=4';
-import { pctToVotes } from './electoral-math.js?v=4';
+import { bus, getPartyTier } from './utils.js?v=11';
+import { pctToVotes } from './electoral-math.js?v=11';
 
 /**
  * PredictionState holds all user-editable prediction data and emits events on change.
@@ -17,7 +17,7 @@ export class PredictionState {
         this.listVotes = new Map();
 
         // Turnout percentage
-        this.turnoutPct = 65.0;
+        this.turnoutPct = 75.0;
 
         // Initialize with defaults
         this._initDefaults();
@@ -249,7 +249,7 @@ export class PredictionState {
             entry.domestic = 0;
             entry.postal = 0;
         }
-        this.turnoutPct = 65.0;
+        this.turnoutPct = 75.0;
         bus.emit('prediction-changed', { type: 'all' });
     }
 

@@ -233,7 +233,7 @@ body {
 .control-panel {
     padding: 1rem 1.1rem;
     overflow-y: auto;
-    max-height: 520px;
+    max-height: 620px;
 }
 .panel-section {
     margin-bottom: 1.4rem;
@@ -500,15 +500,31 @@ body {
     .middle-section { grid-template-columns: 1fr; }
     .map-container { min-height: 280px; }
     .control-panel { max-height: none; }
-    #header { padding: 0.5rem 1rem; }
+    #header {
+        padding: 0.5rem 1rem;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
     #header h1 { font-size: 1rem; }
+    .header-right {
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
     .top-section, .middle-section, .bottom-section { padding-left: 0.75rem; padding-right: 0.75rem; }
     .btn { font-size: 0.75rem; padding: 0.4rem 0.8rem; }
+    #btn-auto-fill, #btn-reset, .poll-filter { display: none; }
+    #btn-live { order: -1; }
 }
 @media (max-width: 500px) {
-    .header-right { flex-direction: column; gap: 0.3rem; }
+    .header-right { flex-direction: row; flex-wrap: wrap; gap: 0.3rem; }
     .candidate-row { grid-template-columns: 10px 1fr 60px 45px; gap: 0.3rem; }
     .list-vote-row input[type="number"] { width: 80px; }
+    .live-view-tabs { flex-wrap: wrap; }
+    .live-view-tabs .tab { flex: 1; text-align: center; min-width: 0; padding: 0.3rem 0.4rem; font-size: 0.68rem; }
+    .live-turnout-tile .tile-value { font-size: 1rem; }
+    .mandate-row { grid-template-columns: 10px 1fr 30px 30px 40px; gap: 0.25rem; font-size: 0.72rem; }
+    .list-vote-row { font-size: 0.72rem; }
+    .list-vote-row .num { font-size: 0.72rem; }
 }
 
 /* === Loading === */
@@ -526,3 +542,190 @@ body {
     stroke-width: 2.5 !important;
     filter: drop-shadow(0 0 6px rgba(255,255,255,0.4));
 }
+
+/* === Live mode === */
+#btn-live {
+    position: relative;
+}
+#btn-live.active {
+    background: var(--success);
+    color: #0a1a14;
+    border-color: var(--success);
+}
+#btn-live.active::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 7px;
+    height: 7px;
+    background: #ff3838;
+    border-radius: 50%;
+    box-shadow: 0 0 6px #ff3838;
+    animation: pulse-dot 1.5s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+#live-panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.8rem;
+    box-shadow: var(--shadow);
+}
+#live-panel.hidden { display: none; }
+
+.live-status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.6rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--border);
+}
+.live-status-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.live-source-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.live-source-badge.napkozi { background: rgba(78, 204, 163, 0.18); color: var(--success); }
+.live-source-badge.szavossz { background: rgba(233, 69, 96, 0.2); color: var(--accent); }
+.live-source-badge.none { background: var(--bg-elevated); color: var(--text-dim); }
+
+.live-controls { display: flex; gap: 0.4rem; align-items: center; }
+.live-controls .btn { padding: 0.3rem 0.7rem; font-size: 0.72rem; }
+.live-last-update {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+.live-error {
+    color: #ff8888;
+    font-size: 0.72rem;
+    padding: 0.3rem 0.5rem;
+    background: rgba(255, 56, 56, 0.1);
+    border-radius: var(--radius-sm);
+    margin-top: 0.3rem;
+}
+
+.live-turnout-summary {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+}
+.live-turnout-tile {
+    background: var(--bg-elevated);
+    padding: 0.5rem 0.6rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+}
+.live-turnout-tile .tile-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.live-turnout-tile .tile-value {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    margin-top: 0.1rem;
+}
+.live-turnout-tile .tile-sub {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.live-events-details {
+    margin-bottom: 0.5rem;
+}
+.live-events-details summary {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.3rem 0;
+    user-select: none;
+}
+.live-events-details summary:hover { color: var(--text); }
+.live-events-details summary span { color: var(--warning); }
+#live-events-list {
+    max-height: 160px;
+    overflow-y: auto;
+    font-size: 0.75rem;
+    margin-top: 0.3rem;
+}
+#live-events-list:empty::after {
+    content: 'Nincs rendkivuli esemeny.';
+    display: block;
+    color: var(--text-dim);
+    font-style: italic;
+    text-align: center;
+    padding: 0.4rem 0;
+}
+.live-event-item {
+    padding: 0.4rem 0.5rem;
+    border-left: 3px solid var(--warning);
+    background: var(--bg-elevated);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    margin-bottom: 0.3rem;
+}
+.live-event-item .ev-time {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+.live-event-item .ev-text {
+    color: var(--text);
+    margin-top: 0.15rem;
+}
+.live-event-item .ev-loc {
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+.live-event-item .ev-action {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    margin-top: 0.2rem;
+    font-style: italic;
+}
+
+/* Map view-mode toggle (turnout heat vs winners) */
+.live-view-tabs { display: flex; gap: 0.3rem; margin-bottom: 0.5rem; }
+.live-view-tabs .tab {
+    padding: 0.3rem 0.7rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.live-view-tabs .tab.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+.live-view-tabs .tab:hover:not(.active) { color: var(--text); }

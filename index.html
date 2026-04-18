@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2026 Választási Prediktor</title>
-    <link rel="stylesheet" href="css/styles.css?v=4">
+    <link rel="stylesheet" href="css/styles.css?v=11">
 </head>
 <body>
     <header id="header">
@@ -19,6 +19,9 @@
             </select>
             <button id="btn-auto-fill" class="btn btn-primary" disabled>
                 Auto kitöltés polling alapján
+            </button>
+            <button id="btn-live" class="btn btn-secondary" title="Elo adatok bekapcsolasa a vtr-bol">
+                Élő mód
             </button>
             <button id="btn-reset" class="btn btn-danger" disabled>
                 Adatok törlése
@@ -38,11 +41,52 @@
             </div>
 
             <div class="control-panel">
-                <section class="panel-section">
+                <div id="live-panel" class="hidden">
+                    <div class="live-status-row">
+                        <div>
+                            <div class="live-status-label">Élő forrás</div>
+                            <span id="live-source-badge" class="live-source-badge none">Nincs</span>
+                        </div>
+                        <div>
+                            <div class="live-status-label">Utolsó frissítés</div>
+                            <div id="live-last-update" class="live-last-update">–</div>
+                        </div>
+                        <div class="live-controls">
+                            <button id="btn-live-refresh" class="btn btn-primary" title="Frissites most">Frissíts</button>
+                        </div>
+                    </div>
+                    <div id="live-error-box"></div>
+
+                    <div class="live-view-tabs">
+                        <button class="tab active" data-live-view="prediction">Predikció</button>
+                        <button class="tab" data-live-view="turnout">Részvétel</button>
+                        <button class="tab" data-live-view="winners">Élő győztes</button>
+                    </div>
+
+                    <div class="live-turnout-summary">
+                        <div class="live-turnout-tile">
+                            <div class="tile-label">Országos részvétel</div>
+                            <div class="tile-value" id="live-tt-national">–</div>
+                            <div class="tile-sub" id="live-tt-national-sub">–</div>
+                        </div>
+                        <div class="live-turnout-tile">
+                            <div class="tile-label">Feldolgozottság</div>
+                            <div class="tile-value" id="live-tt-feldar">–</div>
+                            <div class="tile-sub" id="live-tt-feldar-sub">–</div>
+                        </div>
+                    </div>
+
+                    <details class="live-events-details">
+                        <summary>Rendkívüli események <span id="live-events-count"></span></summary>
+                        <div id="live-events-list"></div>
+                    </details>
+                </div>
+
+                <section class="panel-section" id="turnout-section">
                     <h3>Részvételi arány</h3>
                     <div class="slider-group">
-                        <input type="range" id="turnout-slider" min="30" max="90" value="65" step="0.1">
-                        <span id="turnout-value" class="slider-value">65.0%</span>
+                        <input type="range" id="turnout-slider" min="30" max="90" value="75" step="0.1">
+                        <span id="turnout-value" class="slider-value">75.0%</span>
                     </div>
                     <div class="turnout-info">
                         <span>Szavazók: <strong id="total-voters">0</strong></span>
@@ -94,6 +138,6 @@
         </div>
     </main>
 
-    <script type="module" src="js/app.js?v=4"></script>
+    <script type="module" src="js/app.js?v=11"></script>
 </body>
 </html>
