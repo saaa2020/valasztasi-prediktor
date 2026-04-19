@@ -608,9 +608,15 @@ function renderLiveMandateSummary(container) {
 // === Tables ===
 
 function renderTables() {
-    renderOevkTable();
-    renderNationalTable();
-    renderFragmentTable();
+    if (liveMode && liveView === 'winners' && liveData.results) {
+        renderLiveOevkTable();
+        renderLiveNationalTable();
+        renderLiveFragmentTable();
+    } else {
+        renderOevkTable();
+        renderNationalTable();
+        renderFragmentTable();
+    }
 }
 
 function renderOevkTable() {
@@ -711,6 +717,171 @@ function renderFragmentTable() {
 
     container.innerHTML = `<table>
         <thead><tr><th>Párt</th><th>Töredékszavazat</th></tr></thead>
+        <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// === Live Tables ===
+
+/** Build coalition lookup maps from static data (used by live table renderers). */
+function buildCoalitionLookups() {
+    const tlIdToCode = new Map();
+    if (data.partyLists) {
+        for (const l of data.partyLists) {
+            if (l.listId != null) tlIdToCode.set(l.listId, l.coalitionCode);
+        }
+    }
+    const szkodToCode = new Map();
+    for (const coal of data.coalitions) {
+        for (const orgCode of coal.orgCodes) {
+            szkodToCode.set(orgCode, coal.code);
+        }
+    }
+    return { tlIdToCode, szkodToCode };
+}
+
+function renderLiveOevkTable() {
+    const container = document.getElementById('oevk-table');
+    const oevkRes = liveData.results && liveData.results.oevkRes;
+    const winnersPayload = liveData.results && liveData.results.winners;
+    if (!oevkRes && !winnersPayload) {
+        container.innerHTML = '<p style="color:var(--text-muted); padding:0.5rem;">Nincs elo OEVK adat.</p>';
+        return;
+    }
+
+    const winners = extractWinnersMap(winnersPayload);
+
+    // Build per-OEVK details from OevkJkv in a single pass
+    const oevkDetails = new Map();
+    if (oevkRes) {
+        const list = oevkRes.list || [];
+        for (const row of list) {
+            if (!row) continue;
+            const maz = row.maz != null ? String(row.maz).padStart(2, '0') : null;
+            const evk = row.evk != null ? String(row.evk).padStart(2, '0') : null;
+            if (!maz || !evk) continue;
+            const jkv = row.egyeni_jkv || row;
+            const tetelek = jkv.tetelek || [];
+            const sorted = [...tetelek].sort((a, b) => (b.szavazat || 0) - (a.szavazat || 0));
+            oevkDetails.set(`${maz}-${evk}`, {
+                feldar: typeof jkv.feldar === 'number' ? jkv.feldar : null,
+                winnerPct: sorted[0] ? sorted[0].szavazat_szaz : null,
+                secondPct: sorted[1] ? sorted[1].szavazat_szaz : null,
+            });
+        }
+    }
+
+    let rows = '';
+    for (const oevk of data.oevks) {
+        const winnerCode = winners.get(oevk.id);
+        const detail = oevkDetails.get(oevk.id);
+        const coalition = winnerCode != null ? data.coalitionMap.get(winnerCode) : null;
+        const winnerName = coalition ? (coalition.shortName || coalition.name) : (winnerCode != null ? '?' : '–');
+        const color = coalition ? coalition.color : (winnerCode != null ? '#888' : '#3a3a52');
+        const pct = detail && detail.winnerPct != null ? formatPct(detail.winnerPct) : '–';
+        const margin = detail && detail.winnerPct != null && detail.secondPct != null
+            ? (detail.winnerPct - detail.secondPct).toFixed(1) + '%' : '–';
+        const feldar = detail && detail.feldar != null ? detail.feldar.toFixed(0) + '%' : '–';
+
+        rows += `<tr data-oevk="${oevk.id}" style="cursor:pointer">
+            <td>${oevk.id}</td>
+            <td>${escapeHtml(oevk.name)}${oevk.szekhely ? `, ${escapeHtml(oevk.szekhely)}` : ''}</td>
+            <td>
+                <span class="party-color" style="background:${color}; display:inline-block; width:10px; height:10px; border-radius:2px; vertical-align:middle; margin-right:4px;"></span>
+                ${escapeHtml(winnerName)}
+            </td>
+            <td class="num">${pct}</td>
+            <td class="num">${margin}</td>
+            <td class="num" style="color:var(--text-muted);">${feldar}</td>
+        </tr>`;
+    }
+
+    container.innerHTML = `<table>
+        <thead><tr><th>Kod</th><th>Valasztokerulet</th><th>Gyoztes</th><th>%</th><th>Elony</th><th>Feld.</th></tr></thead>
+        <tbody>${rows}</tbody>
+    </table>`;
+
+    container.querySelectorAll('tr[data-oevk]').forEach(tr => {
+        tr.addEventListener('click', () => onOevkClick(tr.dataset.oevk));
+    });
+}
+
+function renderLiveNationalTable() {
+    const container = document.getElementById('national-table');
+    const orgRes = liveData.results && liveData.results.orgRes;
+    if (!orgRes) {
+        container.innerHTML = '<p style="color:var(--text-muted); padding:0.5rem;">Nincs elo adat.</p>';
+        return;
+    }
+
+    const { tlIdToCode, szkodToCode } = buildCoalitionLookups();
+    const list = orgRes.list || [];
+
+    const entries = list
+        .filter(e => e.szkod !== 0 && ((e.mand_osszes || 0) > 0 || (e.listas_szavazat || 0) > 0 || (e.egyeni_szavazat || 0) > 0))
+        .map(e => {
+            const coalitionCode = (e.tl_id != null ? tlIdToCode.get(e.tl_id) : null)
+                || szkodToCode.get(e.szkod) || null;
+            const coalition = coalitionCode != null ? data.coalitionMap.get(coalitionCode) : null;
+            return {
+                coalition,
+                name: coalition ? (coalition.shortName || coalition.name) : `#${e.szkod}`,
+                color: coalition ? coalition.color : '#888',
+                oevk: e.mand_evk || 0,
+                list: e.mand_listas || 0,
+                total: e.mand_osszes || 0,
+                listVotes: e.listas_szavazat || 0,
+                listPct: e.listas_szavazat_szaz || 0,
+            };
+        })
+        .sort((a, b) => b.total - a.total || b.listVotes - a.listVotes);
+
+    let rows = entries.map(e => `<tr>
+        <td><span class="party-color" style="background:${e.color}; display:inline-block; width:10px; height:10px; border-radius:2px; vertical-align:middle; margin-right:4px;"></span>${escapeHtml(e.name)}</td>
+        <td class="num">${e.oevk}</td>
+        <td class="num">${e.list}</td>
+        <td class="num"><strong>${e.total}</strong></td>
+        <td class="num">${formatNumber(e.listVotes)}</td>
+        <td class="num">${formatPct(e.listPct)}</td>
+    </tr>`).join('');
+
+    container.innerHTML = `<table>
+        <thead><tr><th>Part</th><th>OEVK</th><th>Lista</th><th>Ossz.</th><th>Listas szav.</th><th>Lista %</th></tr></thead>
+        <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function renderLiveFragmentTable() {
+    const container = document.getElementById('fragment-table');
+    const orgRes = liveData.results && liveData.results.orgRes;
+    if (!orgRes) {
+        container.innerHTML = '<p style="color:var(--text-muted); padding:0.5rem;">Nincs elo adat.</p>';
+        return;
+    }
+
+    const { tlIdToCode, szkodToCode } = buildCoalitionLookups();
+    const list = orgRes.list || [];
+
+    const entries = list
+        .filter(e => (e.toredek_szavazat || 0) > 0)
+        .map(e => {
+            const coalitionCode = (e.tl_id != null ? tlIdToCode.get(e.tl_id) : null)
+                || szkodToCode.get(e.szkod) || null;
+            const coalition = coalitionCode != null ? data.coalitionMap.get(coalitionCode) : null;
+            const name = e.szkod === 0 ? 'Fuggetlen'
+                : (coalition ? (coalition.shortName || coalition.name) : `#${e.szkod}`);
+            const color = coalition ? coalition.color : '#888';
+            return { name, color, votes: e.toredek_szavazat || 0 };
+        })
+        .sort((a, b) => b.votes - a.votes);
+
+    let rows = entries.map(e => `<tr>
+        <td><span class="party-color" style="background:${e.color}; display:inline-block; width:10px; height:10px; border-radius:2px; vertical-align:middle; margin-right:4px;"></span>${escapeHtml(e.name)}</td>
+        <td class="num">${formatNumber(e.votes)}</td>
+    </tr>`).join('');
+
+    container.innerHTML = `<table>
+        <thead><tr><th>Part</th><th>Toredekszavazat</th></tr></thead>
         <tbody>${rows}</tbody>
     </table>`;
 }
@@ -938,6 +1109,7 @@ function setupLiveMode() {
         applyHorseshoeRender();
         renderListVotes();
         renderMandateSummary();
+        renderTables();
         if (selectedOevkId) renderOevkDetail(selectedOevkId);
         renderLiveStatus();
     });
@@ -958,7 +1130,7 @@ function setupLiveMode() {
             applyHorseshoeRender();
             renderListVotes();
             renderMandateSummary();
-            // Re-render OEVK detail in case the user switched between predikcio and live views
+            renderTables();
             if (selectedOevkId) renderOevkDetail(selectedOevkId);
         });
     });
@@ -991,6 +1163,7 @@ function setupLiveMode() {
         renderFeldarTile();
         renderListVotes();
         renderMandateSummary();
+        renderTables();
         if (liveMode && selectedOevkId) renderOevkDetail(selectedOevkId);
     });
 
